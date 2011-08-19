@@ -1,0 +1,179 @@
+#!/bin/bash
+
+# copyright Alex Dunn 2011
+
+# version 0.026
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+
+# this program runs pdflatex and bibtex
+# but it copies the files to date- and timestamped directories first
+# thereby building a version history and not altering the original files
+# it can't timestamp the .bib file (yet) because LaTeX refers to the name from within the .tex file
+
+texfile=$1
+texpath=
+shorttex=
+texext=
+bibfile=$2
+bibpath=
+shortbib=
+bibext=
+backhome=$(pwd)
+
+DATE=$(date +'%Y-%m-%d')
+TIME=$(date +'%H.%M.%S')
+
+# do we have a first input?
+if [ "$texfile" = "" ]
+	then
+	echo "---There must be a .tex file specified."
+		exit 1
+	elif [ ! -f "$texfile" ]
+		then
+		echo "---Your .tex file isn't a real file."
+			exit 1
+	else
+		# do we have a TEX file?
+		texext=${texfile#*.}
+		if [ "$texext" != "tex" ]
+			then
+			echo "---The first file must be a .tex file."
+				exit 1
+		else
+		texpath=$(dirname "$texfile")
+		shorttex=$(basename -s .tex "$texfile")
+		# initial .tex management
+			# have we already made a datestamped directory today?
+			if [ ! -e "$texpath/$DATE" ]
+					then
+					mkdir "$texpath/$DATE"
+				# is there a non-directory file in the way?
+				elif [ ! -d "$texpath/$DATE" ]
+					then
+					echo "---There's a file called $DATE where I want to make a directory."
+					echo "---Please move or rename it."
+						exit 1
+			fi
+		# timestamped subdir
+		mkdir "$texpath/$DATE/$TIME"
+		# make a timestamped .tex copy in the subdir
+		cp "$texpath/$shorttex".tex "$texpath/$DATE/$TIME/$shorttex"_"$TIME".tex
+		# first pdflatex run
+		pdflatex -output-directory "$texpath/$DATE/$TIME" -jobname "$shorttex"_"$TIME" "$texpath/$DATE/$TIME/$shorttex"_"$TIME".tex
+		# ought it go here?
+		# cd "$texpath/$DATE/$TIME"
+		# do we have a second input?
+			if [ "$bibfile" != "" ]
+				then
+				# is it a file?
+				if [ ! -f "$bibfile" ]
+					then
+					echo "---Your .bib file isn't a real file."
+						exit 1
+				else
+				bibext=${bibfile#*.}
+					if [ "$bibext" != "bib" ]
+						then
+						echo "---The second file must be a .bib file."
+							exit 1
+					fi
+				# doing bibtex management
+				shortbib=$(basename -s .bib "$bibfile")
+				cp "$texpath/$shortbib".bib "$texpath/$DATE/$TIME"/
+				# this seems like a cheap trick:
+				cd "$texpath/$DATE/$TIME"
+				bibtex "$shorttex"_"$TIME".aux
+				echo -n "---bibtex done. Run pdflatex again? (y/n) "
+				read bibans
+					until [ "$bibans" = "ESCAPE" ]
+						do
+						case $bibans in
+							n 		)	echo -n "---OK. Open file? (y/n) "
+										read opener1
+										until [ "opener1" = "OPEN1" ]
+											do
+											case $opener1 in
+												n		)	echo "---OK. Enjoy!"
+															exit 0
+															;;
+												y | ""	)	cd "$backhome"
+															open "$texpath/$DATE/$TIME/$shorttex"_"$TIME".pdf
+															exit 0
+															;;
+												* 		) 	echo -n "---Stop it, please. (y/n) "
+															read opener1
+											esac
+										done
+										;;
+							y | "" )	pdflatex "$shorttex"_"$TIME".tex
+										bibans="ESCAPE"
+										;;
+							* 		)	echo -n "---Stop it, please. (y/n) "
+										read bibans
+						esac
+					done
+				fi
+			fi
+		# no bib file? no problem!
+		echo -n "---One more pdflatex run? (y/n) "
+		read lastpdf
+			until [ "$lastpdf" = "HURRAH" ]
+				do
+				case $lastpdf in
+					n		)	echo -n "---OK. Open file? (y/n) "
+								read opener2
+									until [ "opener2" = "OPEN2" ]
+										do
+										case $opener2 in
+											n 		)	echo "---OK. Enjoy!"
+														exit 0
+														;;
+											y | ""	)	cd "$backhome"
+														open "$texpath/$DATE/$TIME/$shorttex"_"$TIME".pdf
+														exit 0
+														;;
+											*		)	echo -n "---Stop it, please. (y/n) "
+														read opener2
+										esac
+									done
+								;;
+					y | ""	)	cd "$backhome"
+								pdflatex -output-directory "$texpath/$DATE/$TIME" -jobname "$shorttex"_"$TIME" "$texpath/$DATE/$TIME/$shorttex"_"$TIME".tex
+								# pdflatex "$shorttex"_"$TIME".tex
+								lastpdf="HURRAH"
+								;;
+					*		)	echo -n "---Stop it, please. (y/n) "
+								read lastpdf
+				esac
+			done
+		echo -n "---Open the file? (y/n) "
+		read opener3
+			until [ "opener3" = "OPEN3" ]
+				do
+				case $opener3 in
+					n		)	echo "---OK. Enjoy!"
+								exit 0
+								;;
+					y | ""	)	open "$texpath/$DATE/$TIME/$shorttex"_"$TIME".pdf
+								exit 0
+								;;
+					*		)	echo -n "---Stop it, please. (y/n) "
+								read opener3
+				esac
+			done
+		fi
+fi

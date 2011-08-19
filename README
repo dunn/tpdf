@@ -1,0 +1,20 @@
+tpdf version 0.026
+
+tpdf is a primitive LaTeX version control system combining pdflatex and bibtex
+
+1. move the program file to ~/bin (or wherever you store bash scripts)
+
+2. instead of running pdflatex, do this:
+
+	tpdf sample.tex placeholder.bib
+
+replacing "sample.tex" with your .tex file, and "placeholder.bib" with your .bib file (optional)
+
+3. tpdf will create a datestamped folder in the working directory, and a timestamped folder in the datestamped folder
+4. tpdf will copy the .tex file (timestamping it) into the timestamped directory
+5. tpdf will run pdflatex on the copied .tex file
+6. if you indicated a .bib file, tpdf will copy it to the timestamped folder and run bibtex
+	6a. tpdf will ask if you want to run pdflatex once more to clean up \refs
+7. tpdf will ask to run pdflatex once more to clean up \refs (if you didn't have a .bib file) and /cites (if you did)
+
+(pressing [return] is equivalent to [y] in response to prompts.)
