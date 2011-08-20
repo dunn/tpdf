@@ -1,4 +1,4 @@
-tpdf version 0.026
+tpdf version 0.03
 
 tpdf is a primitive LaTeX version control system combining pdflatex and bibtex
 
@@ -6,9 +6,10 @@ tpdf is a primitive LaTeX version control system combining pdflatex and bibtex
 
 2. instead of running pdflatex, do this:
 
-	tpdf sample.tex placeholder.bib
+	tpdf <option> sample.tex placeholder.bib
 
-replacing "sample.tex" with your .tex file, and "placeholder.bib" with your .bib file (optional)
+	replace "sample.tex" with your .tex file, and "placeholder.bib" with your .bib file (if you have one)
+	replace "<option>" with "-n" if you don't want to date/timestamp your files and just want tpdf to run pdflatex and bibtex in the current directory
 
 3. tpdf will create a datestamped folder in the working directory, and a timestamped folder in the datestamped folder
 4. tpdf will copy the .tex file (timestamping it) into the timestamped directory

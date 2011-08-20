@@ -1,42 +1,35 @@
 #!/bin/bash
 
-# copyright Alex Dunn 2011
-
-# version 0.026
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-#
-
 # this program runs pdflatex and bibtex
 # but it copies the files to date- and timestamped directories first
 # thereby building a version history and not altering the original files
 # it can't timestamp the .bib file (yet) because LaTeX refers to the name from within the .tex file
 
-texfile=$1
+texfile=
 texpath=
 shorttex=
 texext=
-bibfile=$2
+bibfile=
 bibpath=
 shortbib=
 bibext=
 backhome=$(pwd)
+mode=1
+pdftarget=
+pdfoptions=""
+bibtarget=
 
 DATE=$(date +'%Y-%m-%d')
 TIME=$(date +'%H.%M.%S')
 
+# normal or timestamp mode?
+if [ "$1" = "-n" ]
+	then
+	mode="2"
+	shift
+fi
+texfile="$1"
+bibfile="$2"
 # do we have a first input?
 if [ "$texfile" = "" ]
 	then
@@ -56,7 +49,10 @@ if [ "$texfile" = "" ]
 		else
 		texpath=$(dirname "$texfile")
 		shorttex=$(basename -s .tex "$texfile")
-		# initial .tex management
+		pdftarget="$shorttex"
+		# are we date-stamping?
+		if [ "$mode" = "1" ]
+			then
 			# have we already made a datestamped directory today?
 			if [ ! -e "$texpath/$DATE" ]
 					then
@@ -68,12 +64,18 @@ if [ "$texfile" = "" ]
 					echo "---Please move or rename it."
 						exit 1
 			fi
-		# timestamped subdir
-		mkdir "$texpath/$DATE/$TIME"
-		# make a timestamped .tex copy in the subdir
-		cp "$texpath/$shorttex".tex "$texpath/$DATE/$TIME/$shorttex"_"$TIME".tex
+			# timestamped subdir
+			mkdir "$texpath/$DATE/$TIME"
+			# make a timestamped .tex copy in the subdir
+			cp "$texpath/$shorttex.tex" "$texpath/$DATE/$TIME/$shorttex"_"$TIME.tex"
+			# set pdflatex variables
+			pdftarget="$texpath/$DATE/$TIME/$shorttex"_"$TIME"
+			pdfoptions="$texpath/$DATE/$TIME/"
+			else
+				pdfoptions="$backhome"
+		fi
 		# first pdflatex run
-		pdflatex -output-directory "$texpath/$DATE/$TIME" -jobname "$shorttex"_"$TIME" "$texpath/$DATE/$TIME/$shorttex"_"$TIME".tex
+		pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
 		# ought it go here?
 		# cd "$texpath/$DATE/$TIME"
 		# do we have a second input?
@@ -93,10 +95,17 @@ if [ "$texfile" = "" ]
 					fi
 				# doing bibtex management
 				shortbib=$(basename -s .bib "$bibfile")
-				cp "$texpath/$shortbib".bib "$texpath/$DATE/$TIME"/
-				# this seems like a cheap trick:
-				cd "$texpath/$DATE/$TIME"
-				bibtex "$shorttex"_"$TIME".aux
+				if [ "$mode" = "1" ]
+					then
+					cp "$texpath/$shortbib".bib "$texpath/$DATE/$TIME"
+					# this seems like a cheap trick:
+					cd "$texpath/$DATE/$TIME"
+					bibtarget="$shorttex"_"$TIME"
+				else
+					bibtarget="$shorttex"
+				fi
+				bibtex "$bibtarget".aux
+				cd "$backhome"
 				echo -n "---bibtex done. Run pdflatex again? (y/n) "
 				read bibans
 					until [ "$bibans" = "ESCAPE" ]
@@ -110,8 +119,7 @@ if [ "$texfile" = "" ]
 												n		)	echo "---OK. Enjoy!"
 															exit 0
 															;;
-												y | ""	)	cd "$backhome"
-															open "$texpath/$DATE/$TIME/$shorttex"_"$TIME".pdf
+												y | ""	)	open "$pdftarget".pdf
 															exit 0
 															;;
 												* 		) 	echo -n "---Stop it, please. (y/n) "
@@ -119,7 +127,7 @@ if [ "$texfile" = "" ]
 											esac
 										done
 										;;
-							y | "" )	pdflatex "$shorttex"_"$TIME".tex
+							y | "" )	pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
 										bibans="ESCAPE"
 										;;
 							* 		)	echo -n "---Stop it, please. (y/n) "
@@ -142,8 +150,7 @@ if [ "$texfile" = "" ]
 											n 		)	echo "---OK. Enjoy!"
 														exit 0
 														;;
-											y | ""	)	cd "$backhome"
-														open "$texpath/$DATE/$TIME/$shorttex"_"$TIME".pdf
+											y | ""	)	open "$pdftarget".pdf
 														exit 0
 														;;
 											*		)	echo -n "---Stop it, please. (y/n) "
@@ -151,8 +158,7 @@ if [ "$texfile" = "" ]
 										esac
 									done
 								;;
-					y | ""	)	cd "$backhome"
-								pdflatex -output-directory "$texpath/$DATE/$TIME" -jobname "$shorttex"_"$TIME" "$texpath/$DATE/$TIME/$shorttex"_"$TIME".tex
+					y | ""	)	pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
 								# pdflatex "$shorttex"_"$TIME".tex
 								lastpdf="HURRAH"
 								;;
@@ -168,7 +174,7 @@ if [ "$texfile" = "" ]
 					n		)	echo "---OK. Enjoy!"
 								exit 0
 								;;
-					y | ""	)	open "$texpath/$DATE/$TIME/$shorttex"_"$TIME".pdf
+					y | ""	)	open "$pdftarget".pdf
 								exit 0
 								;;
 					*		)	echo -n "---Stop it, please. (y/n) "
