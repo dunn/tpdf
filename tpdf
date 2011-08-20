@@ -14,172 +14,190 @@ bibpath=
 shortbib=
 bibext=
 backhome=$(pwd)
-mode=1
+mode="1"
+bibon="1"
 pdftarget=
 pdfoptions=""
 bibtarget=
-
 DATE=$(date +'%Y-%m-%d')
 TIME=$(date +'%H.%M.%S')
 
-# normal or timestamp mode?
-if [ "$1" = "-n" ]
-	then
-	mode="2"
-	shift
-fi
-texfile="$1"
-bibfile="$2"
+
+# called below after options are determined
+function texing {
 # do we have a first input?
 if [ "$texfile" = "" ]
-	then
+then
 	echo "---There must be a .tex file specified."
-		exit 1
-	elif [ ! -f "$texfile" ]
-		then
-		echo "---Your .tex file isn't a real file."
-			exit 1
-	else
-		# do we have a TEX file?
-		texext=${texfile#*.}
-		if [ "$texext" != "tex" ]
-			then
-			echo "---The first file must be a .tex file."
-				exit 1
-		else
-		texpath=$(dirname "$texfile")
-		shorttex=$(basename -s .tex "$texfile")
-		pdftarget="$shorttex"
-		# are we date-stamping?
-		if [ "$mode" = "1" ]
-			then
-			# have we already made a datestamped directory today?
-			if [ ! -e "$texpath/$DATE" ]
-					then
-					mkdir "$texpath/$DATE"
-				# is there a non-directory file in the way?
-				elif [ ! -d "$texpath/$DATE" ]
-					then
-					echo "---There's a file called $DATE where I want to make a directory."
-					echo "---Please move or rename it."
-						exit 1
-			fi
-			# timestamped subdir
-			mkdir "$texpath/$DATE/$TIME"
-			# make a timestamped .tex copy in the subdir
-			cp "$texpath/$shorttex.tex" "$texpath/$DATE/$TIME/$shorttex"_"$TIME.tex"
-			# set pdflatex variables
-			pdftarget="$texpath/$DATE/$TIME/$shorttex"_"$TIME"
-			pdfoptions="$texpath/$DATE/$TIME/"
-			else
-				pdfoptions="$backhome"
-		fi
-		# first pdflatex run
-		pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
-		# ought it go here?
-		# cd "$texpath/$DATE/$TIME"
-		# do we have a second input?
-			if [ "$bibfile" != "" ]
-				then
-				# is it a file?
-				if [ ! -f "$bibfile" ]
-					then
-					echo "---Your .bib file isn't a real file."
-						exit 1
-				else
-				bibext=${bibfile#*.}
-					if [ "$bibext" != "bib" ]
-						then
-						echo "---The second file must be a .bib file."
-							exit 1
-					fi
-				# doing bibtex management
-				shortbib=$(basename -s .bib "$bibfile")
-				if [ "$mode" = "1" ]
-					then
-					cp "$texpath/$shortbib".bib "$texpath/$DATE/$TIME"
-					# this seems like a cheap trick:
-					cd "$texpath/$DATE/$TIME"
-					bibtarget="$shorttex"_"$TIME"
-				else
-					bibtarget="$shorttex"
-				fi
-				bibtex "$bibtarget".aux
-				cd "$backhome"
-				echo -n "---bibtex done. Run pdflatex again? (y/n) "
-				read bibans
-					until [ "$bibans" = "ESCAPE" ]
-						do
-						case $bibans in
-							n 		)	echo -n "---OK. Open file? (y/n) "
-										read opener1
-										until [ "opener1" = "OPEN1" ]
-											do
-											case $opener1 in
-												n		)	echo "---OK. Enjoy!"
-															exit 0
-															;;
-												y | ""	)	open "$pdftarget".pdf
-															exit 0
-															;;
-												* 		) 	echo -n "---Stop it, please. (y/n) "
-															read opener1
-											esac
-										done
-										;;
-							y | "" )	pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
-										bibans="ESCAPE"
-										;;
-							* 		)	echo -n "---Stop it, please. (y/n) "
-										read bibans
-						esac
-					done
-				fi
-			fi
-		# no bib file? no problem!
-		echo -n "---One more pdflatex run? (y/n) "
-		read lastpdf
-			until [ "$lastpdf" = "HURRAH" ]
-				do
-				case $lastpdf in
-					n		)	echo -n "---OK. Open file? (y/n) "
-								read opener2
-									until [ "opener2" = "OPEN2" ]
-										do
-										case $opener2 in
-											n 		)	echo "---OK. Enjoy!"
-														exit 0
-														;;
-											y | ""	)	open "$pdftarget".pdf
-														exit 0
-														;;
-											*		)	echo -n "---Stop it, please. (y/n) "
-														read opener2
-										esac
-									done
-								;;
-					y | ""	)	pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
-								# pdflatex "$shorttex"_"$TIME".tex
-								lastpdf="HURRAH"
-								;;
-					*		)	echo -n "---Stop it, please. (y/n) "
-								read lastpdf
-				esac
-			done
-		echo -n "---Open the file? (y/n) "
-		read opener3
-			until [ "opener3" = "OPEN3" ]
-				do
-				case $opener3 in
-					n		)	echo "---OK. Enjoy!"
-								exit 0
-								;;
-					y | ""	)	open "$pdftarget".pdf
-								exit 0
-								;;
-					*		)	echo -n "---Stop it, please. (y/n) "
-								read opener3
-				esac
-			done
-		fi
+	exit 1
+elif [ ! -f "$texfile" ]
+then
+	echo "---Your .tex file isn't a real file."
+	exit 1
 fi
+# do we have a proper tex file?
+texext=${texfile#*.}
+if [ "$texext" != "tex" ]
+then
+	echo "---The first file must be a .tex file."
+	exit 1
+else
+	texpath=$(dirname "$texfile")
+	shorttex=$(basename -s .tex "$texfile")
+	pdftarget="$shorttex"
+	# are we date-stamping?
+	if [ "$mode" = "1" ]
+	then
+		# have we already made a datestamped directory today?
+		if [ ! -e "$texpath/$DATE" ]
+		then
+			mkdir "$texpath/$DATE"
+		# is there a non-directory file in the way?
+		elif [ ! -d "$texpath/$DATE" ]
+		then
+			echo "---There's a file called $DATE where I want to make a directory."
+			echo "---Please move or rename it."
+			exit 1
+		fi
+		# timestamped subdir
+		mkdir "$texpath/$DATE/$TIME"
+		# make a timestamped .tex copy in the subdir
+		cp "$texpath/$shorttex.tex" "$texpath/$DATE/$TIME/$shorttex"_"$TIME.tex"
+		# set pdflatex variables
+		pdftarget="$texpath/$DATE/$TIME/$shorttex"_"$TIME"
+		pdfoptions="$texpath/$DATE/$TIME/"
+	else
+		pdfoptions="$backhome"
+	fi
+	# first pdflatex run
+	pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
+	# are we doing bibtex?
+	if [ "$bibon" = "2" ]
+	then
+		if [ "$bibfile" != "" ]
+		then
+			# is it a file?
+			if [ ! -f "$bibfile" ]
+			then
+				echo "---Your .bib file isn't a real file."
+				echo "---(Only specify a .bib file if it is in the same directory as your .tex file.)"
+					exit 1
+			else
+				# is it a bib file?
+				bibext=${bibfile#*.}
+				if [ "$bibext" != "bib" ]
+				then
+					echo "---The second file must be a .bib file."
+					exit 1
+				fi
+			fi
+			# doing bibtex management
+			shortbib=$(basename -s .bib "$bibfile")
+			if [ "$mode" = "1" ]
+			then
+				cp "$texpath/$shortbib".bib "$texpath/$DATE/$TIME"
+				# this seems like a cheap trick:
+				cd "$texpath/$DATE/$TIME"
+				bibtarget="$shorttex"_"$TIME"
+			else
+				bibtarget="$shorttex"
+			fi
+		else
+			bibtarget="$pdftarget"
+		fi
+		bibtex "$bibtarget".aux
+		cd "$backhome"
+		echo -n "---BibTeX done. Run pdfLaTeX again? (y/n) "
+		read bibans
+		until [ "$bibans" = "ESCAPE" ]
+		do
+			case $bibans in
+				n 		)	echo -n "---OK. Open file? (y/n) "
+							read opener1
+							until [ "opener1" = "OPEN1" ]
+								do
+								case $opener1 in
+									n		)	echo "---OK. Enjoy!"
+												exit 0
+												;;
+									y | ""	)	open "$pdftarget".pdf
+												exit 0
+												;;
+									* 		) 	echo -n "---Stop it, please. (y/n) "
+												read opener1
+								esac
+							done
+							;;
+				y | "" )	pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
+							bibans="ESCAPE"
+							;;
+				* 		)	echo -n "---Stop it, please. (y/n) "
+							read bibans
+			esac
+		done
+	fi
+	# no bib file? no problem!
+	echo -n "---One more pdfLaTeX run? (y/n) "
+	read lastpdf
+		until [ "$lastpdf" = "HURRAH" ]
+		do
+			case $lastpdf in
+				n		)	echo -n "---OK. Open file? (y/n) "
+							read opener2
+								until [ "opener2" = "OPEN2" ]
+								do
+									case $opener2 in
+										n 		)	echo "---OK. Enjoy!"
+													exit 0
+													;;
+										y | ""	)	open "$pdftarget".pdf
+													exit 0
+													;;
+										*		)	echo -n "---Stop it, please. (y/n) "
+													read opener2
+									esac
+								done
+							;;
+				y | ""	)	pdflatex -output-directory "$pdfoptions"  "$pdftarget".tex
+							lastpdf="HURRAH"
+							;;
+				*		)	echo -n "---Stop it, please. (y/n) "
+							read lastpdf
+			esac
+		done
+	echo -n "---Open the file? (y/n) "
+	read opener3
+		until [ "opener3" = "OPEN3" ]
+			do
+			case $opener3 in
+				n		)	echo "---OK. Enjoy!"
+							exit 0
+							;;
+				y | ""	)	open "$pdftarget".pdf
+							exit 0
+							;;
+				*		)	echo -n "---Stop it, please. (y/n) "
+							read opener3
+			esac
+		done
+
+fi
+}
+
+# options
+echo "$1, $2, $3, and $4"
+while [ "$1" != "" ]
+do
+	case $1 in
+ 		"-n"	)	mode="2"
+ 					shift
+ 					;;
+ 		"-b"	)	bibon="2"
+ 					shift
+ 					;;
+ 		*		)	texfile="$1"
+					bibfile="$2"
+					texing
+ 					exit 0
+	esac
+done
