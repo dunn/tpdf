@@ -1,9 +1,21 @@
 #!/bin/bash
 
-# this program runs pdflatex and bibtex
-# but it copies the files to date- and timestamped directories first
-# thereby building a version history and not altering the original files
-# it can't timestamp the .bib file (yet) because LaTeX refers to the name from within the .tex file
+# version 0.035
+
+# copyright Alex Dunn 2011
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 texfile=
 texpath=
@@ -185,19 +197,26 @@ fi
 }
 
 # options
-echo "$1, $2, $3, and $4"
-while [ "$1" != "" ]
-do
-	case $1 in
- 		"-n"	)	mode="2"
- 					shift
- 					;;
- 		"-b"	)	bibon="2"
- 					shift
- 					;;
- 		*		)	texfile="$1"
-					bibfile="$2"
-					texing
- 					exit 0
-	esac
-done
+if [ "$1" = "" ]
+then
+	echo "---You need to specify a file."
+	echo "---The format is: tpdf <options> file.tex bib.bib"
+	echo "---See the README for more information."
+	exit 1
+else
+	while [ "$1" != "" ]
+	do
+		case $1 in
+			"-n" | "--normal"	)	mode="2"
+									shift
+									;;
+			"-b" | "--bibtex"	)	bibon="2"
+									shift
+									;;
+			*					)	texfile="$1"
+									bibfile="$2"
+									texing
+									exit 0
+		esac
+	done
+fi
