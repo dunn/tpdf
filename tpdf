@@ -213,6 +213,10 @@ else
 			"-b" | "--bibtex"	)	bibon="2"
 									shift
 									;;
+			"-bn" | "-nb"		)	mode="2"
+									bibon="2"
+									shift
+									;;
 			*					)	texfile="$1"
 									bibfile="$2"
 									texing
