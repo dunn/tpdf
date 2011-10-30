@@ -1,10 +1,10 @@
-tpdf version 0.036
+tpdf version 0.037
 
 tpdf is a primitive LaTeX version control system combining pdflatex and bibtex
 
 running tpdf:
 
-$ tpdf <options> file.tex file.bib
+tpdf <options> file.tex file.bib
 
 		-b
 		--bibtex
@@ -23,7 +23,7 @@ tpdf creates a datestamped folder in the working directory,
 and a timestamped folder in the datestamped folder.
 
 tpdf copies the .tex file (timestamping it) into the timestamped directory
-then runs pdflatex on the copied .tex file
+then runs pdfLaTeX on the copied .tex file
 
 If you indicated a .bib file, tpdf will copy it to the timestamped folder and run BibTeX
 tpdf asks if you want to run pdfLaTeX once more to clean up \refs

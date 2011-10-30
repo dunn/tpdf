@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# version 0.035
+# version 0.037
 
 # copyright Alex Dunn 2011
 
@@ -28,6 +28,7 @@ bibext=
 backhome=$(pwd)
 mode="1"
 bibon="1"
+bttm="0"
 pdftarget=
 pdfoptions=""
 bibtarget=
@@ -207,15 +208,44 @@ else
 	while [ "$1" != "" ]
 	do
 		case $1 in
-			"-n" | "--normal"	)	mode="2"
-									shift
-									;;
-			"-b" | "--bibtex"	)	bibon="2"
-									shift
-									;;
-			"-bn" | "-nb"		)	mode="2"
-									bibon="2"
-									shift
+			"-"*				)	while [[ "$1" = "-"* ]]
+									do
+										case $1 in
+											"--"*	)	if [ "$1" = "--normal" ]
+														then
+															#echo "OINK"
+															#exit 0
+															mode="2"
+														elif [ "$1" = "--bibtex" ]
+														then
+															#echo "OINK"
+															#exit 0
+															bibon="2"
+														else
+															echo "---Invalid command."
+															exit 1
+														fi
+														shift
+														;;
+											*		)	if [[ "$1" = *"b"* ]]
+														then
+															if [ "$bibon" != "2" ]
+															then
+																echo "Bob"
+																bibon="2"
+															fi
+														fi
+														if [[ "$1" = *"n"* ]]
+														then
+															if [ "$mode" != "2" ]
+															then
+																echo "Nob"
+																mode="2"
+															fi
+														fi
+														shift
+										esac
+									done
 									;;
 			*					)	texfile="$1"
 									bibfile="$2"
