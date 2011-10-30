@@ -1,6 +1,6 @@
-tpdf version 0.037
+tpdf version 0.04
 
-tpdf is a primitive LaTeX version control system combining pdflatex and bibtex
+tpdf is a LaTeX frontend that combines pdflatex and bibtex
 
 running tpdf:
 
@@ -12,15 +12,18 @@ tpdf <options> file.tex file.bib
 			if this option is selected without a file.bib file specified,
 			tpdf will look in your local texmf/bibtex/bib directory
 			
-		-n
-		--normal
-			tpdf just runs pdfLaTeX and BibTeX (if selected)
-			without making time- and date-stamped directories
+		-s
+		--stamp
+			tpdf makes time- and date-stamped directories
 			
-		options can be combined (i.e., -bn and -nb)
+		-c
+		--clean
+			tpdf removes old stamped PDFs (but leaves the source files)
+			
+		short options can be combined (e.g., -bsc, -cbs, -bs)
 				
-tpdf creates a datestamped folder in the working directory,
-and a timestamped folder in the datestamped folder.
+If stamp mode is on, tpdf creates a datestamped folder in the
+working directory, and a timestamped folder in the datestamped folder.
 
 tpdf copies the .tex file (timestamping it) into the timestamped directory
 then runs pdfLaTeX on the copied .tex file
@@ -30,7 +33,7 @@ tpdf asks if you want to run pdfLaTeX once more to clean up \refs
 
 Whether or not BibTeX is run, tpdf will ask to run pdfLaTeX once more.
 
-(pressing [return] is equivalent to [y] in response to prompts.)
+(pressing <return> is equivalent to "y" in response to prompts.)
 
 # copyright Alex Dunn 2011
 
