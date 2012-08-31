@@ -1,6 +1,6 @@
 tpdf version 0.04
 
-tpdf is a LaTeX frontend that combines pdflatex and bibtex
+tpdf is a little wrapper script that combines pdflatex and bibtex
 
 running tpdf:
 
@@ -35,7 +35,7 @@ Whether or not BibTeX is run, tpdf will ask to run pdfLaTeX once more.
 
 (pressing <return> is equivalent to "y" in response to prompts.)
 
-# copyright Alex Dunn 2011
+# copyright Alex Dunn 2011--2012
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
